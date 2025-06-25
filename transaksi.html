@@ -12,7 +12,7 @@
       padding: 20px;
     }
     .container {
-      max-width: 800px;
+      max-width: 900px;
       margin: auto;
       background: white;
       padding: 20px;
@@ -124,7 +124,7 @@
   </div>
 
   <script>
-    const sheetURL = "https://script.google.com/macros/s/AKfycbxqd3rMnaFUJPGvchGGksIvpaC4dq_CcS3ZmfZLQ_PjgzywBtN05K5MqC1diTXTDS86/exec";
+    const sheetURL = "https://script.google.com/macros/s/AKfycbwsolTBNAwn0xcz17IzZ0hq2juBlxjJbfz-RplgqgQ-xzdsuM3cGbZsK1yghRUq8P-9/exec";
     let dataObat = [];
     let total = 0;
     let transaksi = [];
@@ -133,7 +133,6 @@
       const res = await fetch(`${sheetURL}?action=get`);
       const data = await res.json();
       dataObat = data;
-
       const select = document.getElementById("nama");
       select.innerHTML = "";
       data.forEach(row => {
@@ -170,10 +169,8 @@
       tbody.appendChild(tr);
 
       transaksi.push([nama, harga, jumlah, totalItem]);
-
       total += totalItem;
       document.getElementById("totalBayar").textContent = total;
-
       document.getElementById("jumlah").value = "";
     }
 
