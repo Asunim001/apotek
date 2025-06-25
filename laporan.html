@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Laporan Penjualan</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f1f1f1;
+    }
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    h2 {
+      text-align: center;
+      color: #007bff;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+    input, select {
+      padding: 10px;
+      margin: 5px;
+      font-size: 16px;
+    }
+    .filter-group {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+    .btn {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Laporan Transaksi</h2>
+    <div class="filter-group">
+      <div>
+        <label for="filterTanggal">Tanggal</label>
+        <input type="date" id="filterTanggal">
+      </div>
+      <div>
+        <label for="filterMetode">Metode</label>
+        <select id="filterMetode">
+          <option value="">Semua</option>
+          <option value="cash">Cash</option>
+          <option value="qris">QRIS</option>
+        </select>
+      </div>
+      <div>
+        <button class="btn" onclick="filterData()">Terapkan Filter</button>
+        <button class="btn" onclick="print()">Cetak</button>
+      </div>
+    </div>
+    
+    <table id="tabelLaporan">
+      <thead>
+        <tr>
+          <th>Tanggal</th>
+          <th>Nama Obat</th>
+          <th>Harga</th>
+          <th>Jumlah</th>
+          <th>Total</th>
+          <th>Metode</th>
+          <th>Dibayar</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    const sheetURL = "https://script.google.com/macros/s/PASTE_ID_WEBAPP/exec"; // Ganti ID-nya
+    let semuaData = [];
+
+    async function loadData() {
+      const res = await fetch(sheetURL + "?action=get_transaksi");
+      const data = await res.json();
+      semuaData = data;
+      tampilkanData(data);
+    }
+
+    function tampilkanData(data) {
+      const tbody = document.querySelector("#tabelLaporan tbody");
+      tbody.innerHTML = "";
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = row.map(item => `<td>${item}</td>`).join("");
+        tbody.appendChild(tr);
+      });
+    }
+
+    function filterData() {
+      const tgl = document.getElementById("filterTanggal").value;
+      const metode = document.getElementById("filterMetode").value;
+
+      const filtered = semuaData.filter(row => {
+        const matchTanggal = tgl ? row[0].startsWith(tgl) : true;
+        const matchMetode = metode ? row[5] === metode : true;
+        return matchTanggal && matchMetode;
+      });
+
+      tampilkanData(filtered);
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
