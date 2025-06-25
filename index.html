@@ -3,37 +3,76 @@
 <head>
   <meta charset="UTF-8" />
   <title>Login Apotek</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
     body {
-      background: #f4f4f4;
-      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
       height: 100vh;
     }
+
     .login-box {
-      background: white;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    input, button {
-      display: block;
+      background: #fff;
+      padding: 40px 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
       width: 100%;
-      margin-bottom: 15px;
-      padding: 10px;
+      max-width: 380px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #2a5298;
+      margin-bottom: 30px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0 20px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
       font-size: 16px;
     }
+
     button {
+      width: 100%;
+      padding: 12px;
       background: #2a5298;
       color: white;
+      font-weight: bold;
       border: none;
+      border-radius: 8px;
+      font-size: 16px;
       cursor: pointer;
+      transition: 0.3s;
     }
+
+    button:hover {
+      background: #1e3c72;
+    }
+
     #errorMsg {
-      color: red;
       text-align: center;
+      color: red;
+      font-size: 14px;
+      margin-top: -10px;
+      margin-bottom: 15px;
+    }
+
+    @media (max-width: 480px) {
+      .login-box {
+        padding: 30px 20px;
+      }
     }
   </style>
 </head>
@@ -43,8 +82,8 @@
     <form id="loginForm">
       <input type="text" id="username" placeholder="Username" required />
       <input type="password" id="password" placeholder="Password" required />
-      <button type="submit">Login</button>
       <p id="errorMsg"></p>
+      <button type="submit">Login</button>
     </form>
   </div>
 
@@ -65,7 +104,6 @@
         const result = await response.json();
         if (result.status === "success") {
           alert(`Selamat datang, ${result.nama} (${result.role})`);
-          // Redirect ke dashboard:
           // window.location.href = result.role === "admin" ? "admin.html" : "kasir.html";
         } else {
           document.getElementById('errorMsg').innerText = result.message;
