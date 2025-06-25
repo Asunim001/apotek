@@ -6,70 +6,73 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f4f4f4;
-      margin: 0;
-      padding: 20px;
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f9f9f9;
     }
     h2 {
-      text-align: center;
       color: #007bff;
+      text-align: center;
     }
     .filter {
       display: flex;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
+      justify-content: space-between;
       margin-bottom: 20px;
+      flex-wrap: wrap;
     }
-    input, select, button {
-      padding: 10px;
-      font-size: 14px;
+    .filter label {
+      margin-right: 10px;
+    }
+    .filter input, .filter select {
+      padding: 5px;
+      margin-right: 20px;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      background-color: white;
+      background: white;
     }
     th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: center;
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
     }
     th {
-      background-color: #007bff;
+      background: #007bff;
       color: white;
     }
     .btn {
-      padding: 10px 15px;
-      border: none;
+      background: green;
       color: white;
+      padding: 10px 20px;
+      border: none;
+      margin-right: 10px;
       cursor: pointer;
     }
-    .btn-green {
-      background-color: #28a745;
-    }
-    .btn-green:hover {
-      background-color: #218838;
+    .btn:hover {
+      background: darkgreen;
     }
   </style>
 </head>
 <body>
   <h2>Laporan Transaksi</h2>
-
   <div class="filter">
-    <label for="tanggal">Tanggal</label>
-    <input type="date" id="tanggal">
-    
-    <label for="metode">Metode</label>
-    <select id="metode">
-      <option value="semua">Semua</option>
-      <option value="cash">Cash</option>
-      <option value="qris">QRIS</option>
-    </select>
-
-    <button class="btn btn-green" onclick="filterData()">Terapkan Filter</button>
-    <button class="btn btn-green" onclick="window.print()">Cetak</button>
+    <div>
+      <label for="filterTanggal">Tanggal</label>
+      <input type="date" id="filterTanggal">
+    </div>
+    <div>
+      <label for="filterMetode">Metode</label>
+      <select id="filterMetode">
+        <option value="Semua">Semua</option>
+        <option value="cash">Cash</option>
+        <option value="qris">QRIS</option>
+      </select>
+    </div>
+    <div>
+      <button class="btn" onclick="filterData()">Terapkan Filter</button>
+      <button class="btn" onclick="window.print()">Cetak</button>
+    </div>
   </div>
 
   <table>
@@ -84,30 +87,33 @@
         <th>Dibayar</th>
       </tr>
     </thead>
-    <tbody id="isiLaporan"></tbody>
+    <tbody id="tabelLaporan"></tbody>
   </table>
 
   <script>
-    const sheetURL = "https://script.google.com/macros/s/AKfycbwSZBlMB0jAQ0Et2egTqDJXu0JwEWC8zHvGFVbMw0fxmCWScjwSZc7l_bBXpFef3CKo/exec";
-    let semuaData = [];
+    const sheetURL = "https://script.google.com/macros/s/AKfycbwSxCBK8SmgjXGKNdNVp7my2EXjg8L3ElowbYfLa9lEr-ZeoO2G-8UwclPmtjFv4MkR/exec";
+    let data = [];
 
     async function ambilData() {
-      const res = await fetch(`${sheetURL}?action=get_transaksi`);
-      semuaData = await res.json();
-      tampilkanData(semuaData);
+      const form = new FormData();
+      form.append("action", "get_transaksi");
+
+      const res = await fetch(sheetURL, { method: "POST", body: form });
+      data = await res.json();
+      tampilkanData(data);
     }
 
-    function tampilkanData(data) {
-      const tbody = document.getElementById("isiLaporan");
+    function tampilkanData(arr) {
+      const tbody = document.getElementById("tabelLaporan");
       tbody.innerHTML = "";
 
-      data.forEach(row => {
+      arr.forEach(row => {
         const tr = document.createElement("tr");
         const tanggal = new Date(row[0]);
-        const tglStr = tanggal.toISOString().split("T")[0]; // yyyy-mm-dd
+        const tanggalStr = isNaN(tanggal) ? row[0] : tanggal.toISOString().split("T")[0];
 
         tr.innerHTML = `
-          <td>${tglStr}</td>
+          <td>${tanggalStr}</td>
           <td>${row[1]}</td>
           <td>${row[2]}</td>
           <td>${row[3]}</td>
@@ -120,17 +126,18 @@
     }
 
     function filterData() {
-      const tglInput = document.getElementById("tanggal").value;
-      const metodeInput = document.getElementById("metode").value;
+      const tanggalInput = document.getElementById("filterTanggal").value;
+      const metode = document.getElementById("filterMetode").value;
 
-      const hasilFilter = semuaData.filter(row => {
-        const tglRow = new Date(row[0]).toISOString().split("T")[0];
-        const tglCocok = tglInput ? tglRow === tglInput : true;
-        const metodeCocok = metodeInput === "semua" || row[5] === metodeInput;
-        return tglCocok && metodeCocok;
+      const hasil = data.filter(row => {
+        const tgl = new Date(row[0]);
+        const tglStr = isNaN(tgl) ? "" : tgl.toISOString().split("T")[0];
+        const cocokTanggal = !tanggalInput || tglStr === tanggalInput;
+        const cocokMetode = metode === "Semua" || row[5] === metode;
+        return cocokTanggal && cocokMetode;
       });
 
-      tampilkanData(hasilFilter);
+      tampilkanData(hasil);
     }
 
     ambilData();
