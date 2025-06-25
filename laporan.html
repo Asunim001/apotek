@@ -2,133 +2,138 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Laporan Penjualan</title>
+  <title>Laporan Transaksi</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f4f4;
       margin: 0;
       padding: 20px;
-      background-color: #f1f1f1;
-    }
-    .container {
-      max-width: 1000px;
-      margin: auto;
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
     }
     h2 {
       text-align: center;
       color: #007bff;
     }
+    .filter {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    input, select, button {
+      padding: 10px;
+      font-size: 14px;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
+      background-color: white;
     }
     th, td {
       border: 1px solid #ddd;
-      padding: 10px;
-      text-align: left;
+      padding: 8px;
+      text-align: center;
     }
     th {
       background-color: #007bff;
       color: white;
     }
-    input, select {
-      padding: 10px;
-      margin: 5px;
-      font-size: 16px;
-    }
-    .filter-group {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-    }
     .btn {
-      background-color: #28a745;
-      color: white;
-      border: none;
       padding: 10px 15px;
+      border: none;
+      color: white;
       cursor: pointer;
-      margin-top: 10px;
+    }
+    .btn-green {
+      background-color: #28a745;
+    }
+    .btn-green:hover {
+      background-color: #218838;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Laporan Transaksi</h2>
-    <div class="filter-group">
-      <div>
-        <label for="filterTanggal">Tanggal</label>
-        <input type="date" id="filterTanggal">
-      </div>
-      <div>
-        <label for="filterMetode">Metode</label>
-        <select id="filterMetode">
-          <option value="">Semua</option>
-          <option value="cash">Cash</option>
-          <option value="qris">QRIS</option>
-        </select>
-      </div>
-      <div>
-        <button class="btn" onclick="filterData()">Terapkan Filter</button>
-        <button class="btn" onclick="print()">Cetak</button>
-      </div>
-    </div>
+  <h2>Laporan Transaksi</h2>
+
+  <div class="filter">
+    <label for="tanggal">Tanggal</label>
+    <input type="date" id="tanggal">
     
-    <table id="tabelLaporan">
-      <thead>
-        <tr>
-          <th>Tanggal</th>
-          <th>Nama Obat</th>
-          <th>Harga</th>
-          <th>Jumlah</th>
-          <th>Total</th>
-          <th>Metode</th>
-          <th>Dibayar</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <label for="metode">Metode</label>
+    <select id="metode">
+      <option value="semua">Semua</option>
+      <option value="cash">Cash</option>
+      <option value="qris">QRIS</option>
+    </select>
+
+    <button class="btn btn-green" onclick="filterData()">Terapkan Filter</button>
+    <button class="btn btn-green" onclick="window.print()">Cetak</button>
   </div>
 
+  <table>
+    <thead>
+      <tr>
+        <th>Tanggal</th>
+        <th>Nama Obat</th>
+        <th>Harga</th>
+        <th>Jumlah</th>
+        <th>Total</th>
+        <th>Metode</th>
+        <th>Dibayar</th>
+      </tr>
+    </thead>
+    <tbody id="isiLaporan"></tbody>
+  </table>
+
   <script>
-    const sheetURL = "https://script.google.com/macros/s/AKfycbzYpJDyFyFQ1OTIFUxXMyxEnfMPpUWGttVFLYdlBp9hQYGiSywa150mmjff3kcY2ejM/exec"; // Ganti ID-nya
+    const sheetURL = "https://script.google.com/macros/s/AKfycbwjm6pVl0XKH3c7wM1pbaY1GZRxOD7vBkRVa4zSrQjotLZRV5WCJpMccj7HFpIa5yyS/exec";
     let semuaData = [];
 
-    async function loadData() {
-      const res = await fetch(sheetURL + "?action=get_transaksi");
-      const data = await res.json();
-      semuaData = data;
-      tampilkanData(data);
+    async function ambilData() {
+      const res = await fetch(`${sheetURL}?action=get_transaksi`);
+      semuaData = await res.json();
+      tampilkanData(semuaData);
     }
 
     function tampilkanData(data) {
-      const tbody = document.querySelector("#tabelLaporan tbody");
+      const tbody = document.getElementById("isiLaporan");
       tbody.innerHTML = "";
+
       data.forEach(row => {
         const tr = document.createElement("tr");
-        tr.innerHTML = row.map(item => `<td>${item}</td>`).join("");
+        const tanggal = new Date(row[0]);
+        const tglStr = tanggal.toISOString().split("T")[0]; // yyyy-mm-dd
+
+        tr.innerHTML = `
+          <td>${tglStr}</td>
+          <td>${row[1]}</td>
+          <td>${row[2]}</td>
+          <td>${row[3]}</td>
+          <td>${row[4]}</td>
+          <td>${row[5]}</td>
+          <td>${row[6]}</td>
+        `;
         tbody.appendChild(tr);
       });
     }
 
     function filterData() {
-      const tgl = document.getElementById("filterTanggal").value;
-      const metode = document.getElementById("filterMetode").value;
+      const tglInput = document.getElementById("tanggal").value;
+      const metodeInput = document.getElementById("metode").value;
 
-      const filtered = semuaData.filter(row => {
-        const matchTanggal = tgl ? row[0].startsWith(tgl) : true;
-        const matchMetode = metode ? row[5] === metode : true;
-        return matchTanggal && matchMetode;
+      const hasilFilter = semuaData.filter(row => {
+        const tglRow = new Date(row[0]).toISOString().split("T")[0];
+        const tglCocok = tglInput ? tglRow === tglInput : true;
+        const metodeCocok = metodeInput === "semua" || row[5] === metodeInput;
+        return tglCocok && metodeCocok;
       });
 
-      tampilkanData(filtered);
+      tampilkanData(hasilFilter);
     }
 
-    loadData();
+    ambilData();
   </script>
 </body>
 </html>
