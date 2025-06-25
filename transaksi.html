@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Transaksi Penjualan</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f7f7f7;
+      padding: 30px;
+    }
+    .container {
+      background: white;
+      padding: 25px;
+      max-width: 500px;
+      margin: auto;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #2a5298;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      background: #2a5298;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #1e3c72;
+    }
+    #message {
+      text-align: center;
+      color: green;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Input Transaksi Penjualan</h2>
+    <form id="transaksiForm">
+      <input type="date" id="tanggal" required />
+      <input type="text" id="nama_obat" placeholder="Nama Obat" required />
+      <input type="number" id="jumlah" placeholder="Jumlah" required />
+      <input type="number" id="harga_satuan" placeholder="Harga Satuan" required />
+      <select id="metode_bayar">
+        <option value="Cash">Cash</option>
+        <option value="QRIS">QRIS</option>
+      </select>
+      <button type="submit">Simpan Transaksi</button>
+      <p id="message"></p>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById("transaksiForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const kasir = localStorage.getItem('nama');
+      const tanggal = document.getElementById("tanggal").value;
+      const nama_obat = document.getElementById("nama_obat").value;
+      const jumlah = parseInt(document.getElementById("jumlah").value);
+      const harga = parseInt(document.getElementById("harga_satuan").value);
+      const total = jumlah * harga;
+      const metode = document.getElementById("metode_bayar").value;
+
+      const formData = new FormData();
+      formData.append("action", "transaksi");
+      formData.append("tanggal", tanggal);
+      formData.append("nama_obat", nama_obat);
+      formData.append("jumlah", jumlah);
+      formData.append("harga_satuan", harga);
+      formData.append("total", total);
+      formData.append("metode_bayar", metode);
+      formData.append("kasir", kasir);
+
+      try {
+        const response = await fetch("https://script.google.com/macros/s/PASTE-LINK-GAS-KAMU/exec", {
+          method: "POST",
+          body: formData
+        });
+        const result = await response.json();
+
+        if (result.status === "success") {
+          document.getElementById("message").innerText = "✅ Transaksi berhasil disimpan!";
+          document.getElementById("transaksiForm").reset();
+        } else {
+          document.getElementById("message").innerText = "❌ Gagal menyimpan transaksi.";
+        }
+      } catch (err) {
+        console.error(err);
+        document.getElementById("message").innerText = "⚠️ Gagal terhubung ke server.";
+      }
+    });
+  </script>
+</body>
+</html>
