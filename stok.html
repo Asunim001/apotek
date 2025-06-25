@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Manajemen Stok Obat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f0f0;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 800px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #2a5298;
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px 5px;
+      font-size: 16px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background: #2a5298;
+      color: white;
+    }
+    .actions button {
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Manajemen Stok Obat</h2>
+    <div>
+      <input type="text" id="nama_obat" placeholder="Nama Obat">
+      <input type="number" id="harga_satuan" placeholder="Harga Satuan">
+      <input type="number" id="jumlah_stok" placeholder="Jumlah Stok">
+      <input type="hidden" id="editIndex">
+      <button onclick="simpanObat()">Simpan</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Nama Obat</th>
+          <th>Harga Satuan</th>
+          <th>Jumlah Stok</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="dataBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const sheetURL = "https://script.google.com/macros/s/PASTE_ID_WEBAPP_KAMU/exec";
+
+    async function loadData() {
+      const res = await fetch(`${sheetURL}?action=get`);
+      const data = await res.json();
+      const body = document.getElementById("dataBody");
+      body.innerHTML = "";
+      data.forEach((row, i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${row[0]}</td>
+          <td>${row[1]}</td>
+          <td>${row[2]}</td>
+          <td class="actions">
+            <button onclick="editObat(${i}, '${row[0]}', ${row[1]}, ${row[2]})">Edit</button>
+            <button onclick="hapusObat(${i})">Hapus</button>
+          </td>
+        `;
+        body.appendChild(tr);
+      });
+    }
+
+    async function simpanObat() {
+      const nama = document.getElementById("nama_obat").value;
+      const harga = document.getElementById("harga_satuan").value;
+      const stok = document.getElementById("jumlah_stok").value;
+      const editIndex = document.getElementById("editIndex").value;
+
+      const formData = new FormData();
+      if (editIndex === "") {
+        formData.append("action", "tambah");
+        formData.append("nama_obat", nama);
+        formData.append("harga_satuan", harga);
+        formData.append("jumlah_stok", stok);
+      } else {
+        formData.append("action", "update");
+        formData.append("index", editIndex);
+        formData.append("nama_obat", nama);
+        formData.append("harga_satuan", harga);
+        formData.append("jumlah_stok", stok);
+      }
+
+      await fetch(sheetURL, { method: "POST", body: formData });
+      document.getElementById("nama_obat").value = "";
+      document.getElementById("harga_satuan").value = "";
+      document.getElementById("jumlah_stok").value = "";
+      document.getElementById("editIndex").value = "";
+      loadData();
+    }
+
+    function editObat(index, nama, harga, stok) {
+      document.getElementById("nama_obat").value = nama;
+      document.getElementById("harga_satuan").value = harga;
+      document.getElementById("jumlah_stok").value = stok;
+      document.getElementById("editIndex").value = index;
+    }
+
+    async function hapusObat(index) {
+      const formData = new FormData();
+      formData.append("action", "hapus");
+      formData.append("index", index);
+      await fetch(sheetURL, { method: "POST", body: formData });
+      loadData();
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
