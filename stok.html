@@ -7,25 +7,36 @@
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #f0f0f0;
+      background-color: #f4f4f4;
+      margin: 0;
       padding: 20px;
     }
     .container {
+      max-width: 900px;
+      margin: auto;
       background: white;
       padding: 20px;
       border-radius: 10px;
-      max-width: 800px;
-      margin: auto;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     h2 {
       text-align: center;
-      color: #2a5298;
+      color: #2c3e50;
     }
     input, button {
       padding: 10px;
-      margin: 10px 5px;
+      margin: 5px;
       font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      background-color: #2980b9;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #1f6690;
     }
     table {
       width: 100%;
@@ -34,21 +45,29 @@
     }
     th, td {
       padding: 10px;
-      border: 1px solid #ccc;
-      text-align: left;
+      border: 1px solid #ddd;
     }
     th {
-      background: #2a5298;
+      background-color: #2980b9;
       color: white;
     }
     .actions button {
       margin-right: 5px;
+      padding: 5px 10px;
+      font-size: 14px;
+    }
+    @media screen and (max-width: 600px) {
+      input, button {
+        width: 100%;
+        margin-top: 10px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>Manajemen Stok Obat</h2>
+
     <div>
       <input type="text" id="nama_obat" placeholder="Nama Obat">
       <input type="number" id="harga_satuan" placeholder="Harga Satuan">
@@ -56,6 +75,7 @@
       <input type="hidden" id="editIndex">
       <button onclick="simpanObat()">Simpan</button>
     </div>
+
     <table>
       <thead>
         <tr>
@@ -70,18 +90,19 @@
   </div>
 
   <script>
-    const sheetURL = "https://script.google.com/macros/s/AKfycbzBjDQ5MAkakmpB4JAuYLtdE-6e6gHDSUoDMWx-vg59Tuoya-Ptj3SLEQBwStshdQMY/exec";
+    const sheetURL = "https://script.google.com/macros/s/AKfycbxrYrpSRzPCSgBt5kxhXvMY-mCrMHSUu1VDL9z8kUiPFd8pLbRVmUTeBFWsrjZdPGtT/exec";
 
     async function loadData() {
       const res = await fetch(`${sheetURL}?action=get`);
       const data = await res.json();
       const body = document.getElementById("dataBody");
       body.innerHTML = "";
+
       data.forEach((row, i) => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${row[0]}</td>
-          <td>${row[1]}</td>
+          <td>Rp ${parseInt(row[1]).toLocaleString()}</td>
           <td>${row[2]}</td>
           <td class="actions">
             <button onclick="editObat(${i}, '${row[0]}', ${row[1]}, ${row[2]})">Edit</button>
@@ -98,25 +119,26 @@
       const stok = document.getElementById("jumlah_stok").value;
       const editIndex = document.getElementById("editIndex").value;
 
+      if (!nama || !harga || !stok) return alert("Lengkapi semua data.");
+
       const formData = new FormData();
       if (editIndex === "") {
         formData.append("action", "tambah");
-        formData.append("nama_obat", nama);
-        formData.append("harga_satuan", harga);
-        formData.append("jumlah_stok", stok);
       } else {
         formData.append("action", "update");
         formData.append("index", editIndex);
-        formData.append("nama_obat", nama);
-        formData.append("harga_satuan", harga);
-        formData.append("jumlah_stok", stok);
       }
+      formData.append("nama_obat", nama);
+      formData.append("harga_satuan", harga);
+      formData.append("jumlah_stok", stok);
 
       await fetch(sheetURL, { method: "POST", body: formData });
+
       document.getElementById("nama_obat").value = "";
       document.getElementById("harga_satuan").value = "";
       document.getElementById("jumlah_stok").value = "";
       document.getElementById("editIndex").value = "";
+
       loadData();
     }
 
@@ -128,6 +150,7 @@
     }
 
     async function hapusObat(index) {
+      if (!confirm("Yakin ingin menghapus?")) return;
       const formData = new FormData();
       formData.append("action", "hapus");
       formData.append("index", index);
