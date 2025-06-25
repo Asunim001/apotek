@@ -95,13 +95,10 @@
     let data = [];
 
     async function ambilData() {
-      const form = new FormData();
-      form.append("action", "get_transaksi");
-
-      const res = await fetch(sheetURL, { method: "POST", body: form });
-      data = await res.json();
-      tampilkanData(data);
-    }
+  const res = await fetch(sheetURL + "?action=get_transaksi");
+  data = await res.json();
+  tampilkanData(data);
+}
 
     function tampilkanData(arr) {
       const tbody = document.getElementById("tabelLaporan");
