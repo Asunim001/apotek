@@ -51,6 +51,20 @@
     .btn:hover {
       background-color: #218838;
     }
+    #qrisBox {
+      display: none;
+      text-align: center;
+      margin-top: 10px;
+    }
+    #kembalianBox {
+      margin-top: 10px;
+    }
+    #struk {
+      display: none;
+      margin-top: 20px;
+      border-top: 1px dashed #333;
+      padding-top: 20px;
+    }
   </style>
 </head>
 <body>
@@ -82,12 +96,38 @@
         </tr>
       </tfoot>
     </table>
+
+    <label for="metode">Metode Pembayaran:</label>
+    <select id="metode" onchange="togglePembayaran()">
+      <option value="cash">Cash</option>
+      <option value="qris">QRIS</option>
+    </select>
+
+    <div id="cashBox">
+      <label for="uang">Uang Tunai</label>
+      <input type="number" id="uang" placeholder="Masukkan jumlah uang" oninput="hitungKembalian()">
+      <div id="kembalianBox"></div>
+    </div>
+
+    <div id="qrisBox">
+      <p>Silakan scan QRIS berikut:</p>
+      <img src="https://via.placeholder.com/200x200.png?text=QRIS" alt="QRIS" width="200">
+    </div>
+
+    <button class="btn" onclick="simpanTransaksi()" style="margin-top:20px;">Bayar & Simpan</button>
+
+    <div id="struk">
+      <h3>Struk Pembayaran</h3>
+      <div id="isiStruk"></div>
+      <button class="btn" onclick="window.print()">Cetak Struk</button>
+    </div>
   </div>
 
   <script>
-    const sheetURL = "https://script.google.com/macros/s/AKfycbzBjDQ5MAkakmpB4JAuYLtdE-6e6gHDSUoDMWx-vg59Tuoya-Ptj3SLEQBwStshdQMY/exec";
+    const sheetURL = "https://script.google.com/macros/s/AKfycbxHm_HiUTJUwFdbw2V4WuCsjZLDmwLoDyp8c5s_8Wf3Umf474pR5wc6xjz-GOc6l6pQ/exec";
     let dataObat = [];
     let total = 0;
+    let transaksi = [];
 
     async function loadObat() {
       const res = await fetch(`${sheetURL}?action=get`);
@@ -129,10 +169,65 @@
       `;
       tbody.appendChild(tr);
 
+      transaksi.push([nama, harga, jumlah, totalItem]);
+
       total += totalItem;
       document.getElementById("totalBayar").textContent = total;
 
       document.getElementById("jumlah").value = "";
+    }
+
+    function togglePembayaran() {
+      const metode = document.getElementById("metode").value;
+      document.getElementById("qrisBox").style.display = metode === "qris" ? "block" : "none";
+      document.getElementById("cashBox").style.display = metode === "cash" ? "block" : "none";
+    }
+
+    function hitungKembalian() {
+      const uang = parseInt(document.getElementById("uang").value || 0);
+      const kembalian = uang - total;
+      const kembalianBox = document.getElementById("kembalianBox");
+      kembalianBox.innerHTML = kembalian >= 0 ? `Kembalian: Rp ${kembalian}` : "";
+    }
+
+    async function simpanTransaksi() {
+      const metode = document.getElementById("metode").value;
+      const uang = metode === "cash" ? parseInt(document.getElementById("uang").value || 0) : total;
+
+      if (metode === "cash" && uang < total) {
+        alert("Uang tunai kurang!");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("action", "simpan_transaksi");
+      formData.append("data", JSON.stringify(transaksi));
+      formData.append("total", total);
+      formData.append("metode", metode);
+      formData.append("dibayar", uang);
+
+      await fetch(sheetURL, { method: "POST", body: formData });
+
+      for (let item of transaksi) {
+        const formKurang = new FormData();
+        formKurang.append("action", "kurangi_stok");
+        formKurang.append("nama_obat", item[0]);
+        formKurang.append("jumlah", item[2]);
+        await fetch(sheetURL, { method: "POST", body: formKurang });
+      }
+
+      tampilkanStruk();
+    }
+
+    function tampilkanStruk() {
+      const isiStruk = document.getElementById("isiStruk");
+      let html = "<ul>";
+      transaksi.forEach(item => {
+        html += `<li>${item[0]} x ${item[2]} = Rp ${item[3]}</li>`;
+      });
+      html += `</ul><p><strong>Total:</strong> Rp ${total}</p>`;
+      isiStruk.innerHTML = html;
+      document.getElementById("struk").style.display = "block";
     }
 
     loadObat();
