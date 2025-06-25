@@ -2,108 +2,140 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Transaksi Penjualan</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Transaksi Penjualan Obat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #f7f7f7;
-      padding: 30px;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 20px;
     }
     .container {
-      background: white;
-      padding: 25px;
-      max-width: 500px;
+      max-width: 800px;
       margin: auto;
+      background: white;
+      padding: 20px;
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
     h2 {
       text-align: center;
-      color: #2a5298;
+      color: #007bff;
     }
     input, select, button {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      border-radius: 6px;
-      border: 1px solid #ccc;
+      padding: 10px;
+      margin: 5px;
       font-size: 16px;
+      width: 100%;
     }
-    button {
-      background: #2a5298;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #dee2e6;
+    }
+    th {
+      background-color: #007bff;
       color: white;
-      font-weight: bold;
+    }
+    .btn {
+      background-color: #28a745;
+      color: white;
+      border: none;
       cursor: pointer;
-      transition: 0.3s;
     }
-    button:hover {
-      background: #1e3c72;
-    }
-    #message {
-      text-align: center;
-      color: green;
-      font-weight: bold;
+    .btn:hover {
+      background-color: #218838;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>Input Transaksi Penjualan</h2>
-    <form id="transaksiForm">
-      <input type="date" id="tanggal" required />
-      <input type="text" id="nama_obat" placeholder="Nama Obat" required />
-      <input type="number" id="jumlah" placeholder="Jumlah" required />
-      <input type="number" id="harga_satuan" placeholder="Harga Satuan" required />
-      <select id="metode_bayar">
-        <option value="Cash">Cash</option>
-        <option value="QRIS">QRIS</option>
-      </select>
-      <button type="submit">Simpan Transaksi</button>
-      <p id="message"></p>
-    </form>
+    <h2>Transaksi Penjualan</h2>
+    <div>
+      <label for="nama">Nama Obat</label>
+      <select id="nama"></select>
+      <label for="harga">Harga Satuan</label>
+      <input type="number" id="harga" readonly>
+      <label for="jumlah">Jumlah</label>
+      <input type="number" id="jumlah">
+      <button class="btn" onclick="tambahTransaksi()">Tambah ke Daftar</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Nama Obat</th>
+          <th>Harga</th>
+          <th>Jumlah</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody id="tabelTransaksi"></tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3" style="text-align:right;"><strong>Total Bayar</strong></td>
+          <td id="totalBayar">0</td>
+        </tr>
+      </tfoot>
+    </table>
   </div>
 
   <script>
-    document.getElementById("transaksiForm").addEventListener("submit", async function(e) {
-      e.preventDefault();
+    const sheetURL = "https://script.google.com/macros/s/AKfycbzBjDQ5MAkakmpB4JAuYLtdE-6e6gHDSUoDMWx-vg59Tuoya-Ptj3SLEQBwStshdQMY/exec";
+    let dataObat = [];
+    let total = 0;
 
-      const kasir = localStorage.getItem('nama');
-      const tanggal = document.getElementById("tanggal").value;
-      const nama_obat = document.getElementById("nama_obat").value;
+    async function loadObat() {
+      const res = await fetch(`${sheetURL}?action=get`);
+      const data = await res.json();
+      dataObat = data;
+
+      const select = document.getElementById("nama");
+      select.innerHTML = "";
+      data.forEach(row => {
+        const option = document.createElement("option");
+        option.value = row[0];
+        option.textContent = row[0];
+        select.appendChild(option);
+      });
+      updateHarga();
+    }
+
+    document.getElementById("nama").addEventListener("change", updateHarga);
+
+    function updateHarga() {
+      const nama = document.getElementById("nama").value;
+      const obat = dataObat.find(o => o[0] === nama);
+      document.getElementById("harga").value = obat ? obat[1] : 0;
+    }
+
+    function tambahTransaksi() {
+      const nama = document.getElementById("nama").value;
+      const harga = parseInt(document.getElementById("harga").value);
       const jumlah = parseInt(document.getElementById("jumlah").value);
-      const harga = parseInt(document.getElementById("harga_satuan").value);
-      const total = jumlah * harga;
-      const metode = document.getElementById("metode_bayar").value;
+      const totalItem = harga * jumlah;
 
-      const formData = new FormData();
-      formData.append("action", "transaksi");
-      formData.append("tanggal", tanggal);
-      formData.append("nama_obat", nama_obat);
-      formData.append("jumlah", jumlah);
-      formData.append("harga_satuan", harga);
-      formData.append("total", total);
-      formData.append("metode_bayar", metode);
-      formData.append("kasir", kasir);
+      const tbody = document.getElementById("tabelTransaksi");
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${nama}</td>
+        <td>${harga}</td>
+        <td>${jumlah}</td>
+        <td>${totalItem}</td>
+      `;
+      tbody.appendChild(tr);
 
-      try {
-        const response = await fetch("https://script.google.com/macros/s/PASTE-LINK-GAS-KAMU/exec", {
-          method: "POST",
-          body: formData
-        });
-        const result = await response.json();
+      total += totalItem;
+      document.getElementById("totalBayar").textContent = total;
 
-        if (result.status === "success") {
-          document.getElementById("message").innerText = "✅ Transaksi berhasil disimpan!";
-          document.getElementById("transaksiForm").reset();
-        } else {
-          document.getElementById("message").innerText = "❌ Gagal menyimpan transaksi.";
-        }
-      } catch (err) {
-        console.error(err);
-        document.getElementById("message").innerText = "⚠️ Gagal terhubung ke server.";
-      }
-    });
+      document.getElementById("jumlah").value = "";
+    }
+
+    loadObat();
   </script>
 </body>
 </html>
